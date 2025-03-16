@@ -96,8 +96,8 @@ if selected_race != "Huidig Klassement":
                     df_races.at[race_index, f"P{positie}"] = speler
             save_data(df_races)
 
-        # 🔄 Live update direct na opslaan
-        st.experimental_rerun()
+        # 🔄 **Fix: `st.rerun()` in plaats van `st.experimental_rerun()`**
+        st.rerun()
 
 # 🎖️ Podium weergave
 def toon_podium(df_podium):
