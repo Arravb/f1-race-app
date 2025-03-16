@@ -33,6 +33,12 @@ def load_data():
         save_data(df)  # ✅ Sla direct op om een lege lijst te voorkomen
     else:
         df = pd.read_csv(DATA_FILE)
+    
+    # Zorg dat alle kolommen correct zijn
+    for col in COLUMNS:
+        if col not in df.columns:
+            df[col] = pd.NA
+
     return df
 
 # ✅ Functie om data op te slaan
@@ -87,7 +93,7 @@ if selected_race != "Huidig Klassement":
         race_results[speler] = st.sidebar.selectbox(
             f"{speler}",
             ["Geen"] + list(range(1, 21)),
-            index=(["Geen"] + list(range(1, 21))).index(existing_position) if existing_position != "Geen" else 0
+            index=(["Geen"] + list(range(1, 21))).index(str(existing_position)) if existing_position != "Geen" else 0
         )
 
     # ✅ Direct opslaan & updaten bij klik op "Opslaan"
@@ -99,8 +105,7 @@ if selected_race != "Huidig Klassement":
             save_data(df_races)
 
         # 🔄 Live update direct na opslaan
-        st.session_state["update"] = True
-        st.rerun()  # ✅ Correcte herstart zonder foutmelding
+        st.rerun()
 
 # 🎖️ Podium weergave
 def toon_podium(df_podium):
