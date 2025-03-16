@@ -63,14 +63,10 @@ st.title("🏎️ F1 Online Kampioenschap 2025")
 # Dropdown voor race selectie in de sidebar
 selected_race = st.sidebar.selectbox("📅 Selecteer een Grand Prix", ["Huidig Klassement"] + RACES)
 
-if selected_race == "Huidig Klassement":
-    # Toon het algemene klassement
-    st.subheader("🏆 Algemeen Klassement")
-    df_stand = bereken_punten(df_races)
-    
-    # Toon podium met professionele opmaak
-    if len(df_stand) >= 3:
-        podium = df_stand.iloc[:3]
+# Functie voor podium weergave
+def toon_podium(df_podium):
+    if len(df_podium) >= 3:
+        podium = df_podium.iloc[:3]
         st.markdown(f"""
         <style>
             .podium-container {{
@@ -84,6 +80,8 @@ if selected_race == "Huidig Klassement":
                 padding: 20px;
                 border-radius: 10px;
                 font-weight: bold;
+                width: 150px;
+                margin: 5px;
             }}
             .gold {{ background-color: gold; font-size: 28px; padding: 30px; }}
             .silver {{ background-color: silver; font-size: 24px; padding: 25px; }}
@@ -96,6 +94,14 @@ if selected_race == "Huidig Klassement":
             <div class="podium-item bronze">🥉 {podium.iloc[2]['Speler']}</div>
         </div>
         """, unsafe_allow_html=True)
+
+if selected_race == "Huidig Klassement":
+    # Toon het algemene klassement
+    st.subheader("🏆 Algemeen Klassement")
+    df_stand = bereken_punten(df_races)
+    
+    # Toon podium voor algemeen klassement
+    toon_podium(df_stand)
 
     # Toon de stand als tabel zonder index
     st.subheader("📊 Huidige Stand")
@@ -114,6 +120,9 @@ else:
             race_stand.append((speler, PUNTEN_SYSTEEM[pos]))
 
     df_race_stand = pd.DataFrame(race_stand, columns=["Speler", "Punten"]).sort_values(by="Punten", ascending=False)
+
+    # Toon podium voor deze race
+    toon_podium(df_race_stand)
 
     # Stand voor deze race zonder index
     st.subheader(f"📊 Stand {selected_race}")
