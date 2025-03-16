@@ -14,8 +14,8 @@ SPELERS = ["Arvin", "Roland", "Frank van Ofwegen", "Mahir", "Mario-VDH", "Nicky"
 DATA_FILE = "races_data.csv"
 
 # Races en kolommen
-RACES = ["Australië GP", "China GP", "Japan GP", "Bahrein GP", "Saoedi-Arabië GP"]
-COLUMNS = [f"P{i}" for i in range(1, 21)] + ["Snelste Ronde"]
+RACES = ["Australië GP", "China GP", "Japan GP", "Bahrein GP", "Saoedi-Arabië GP", "Monaco GP", "Canada GP", "Spanje GP", "Oostenrijk GP", "Groot-Brittannië GP", "Hongarije GP", "België GP", "Nederland GP", "Italië GP", "Singapore GP", "Japan GP", "Qatar GP", "Verenigde Staten GP", "Mexico GP", "Brazilië GP", "Las Vegas GP", "Abu Dhabi GP"]
+COLUMNS = ["Naam"] + [f"P{i}" for i in range(1, 21)] + ["Snelste Ronde"]
 
 # Functie om opgeslagen data te laden
 def load_data():
@@ -41,7 +41,6 @@ def bereken_punten(df):
         if pd.notna(row.get('Snelste Ronde')) and row['Snelste Ronde'] in punten_telling:
             punten_telling[row['Snelste Ronde']] += 1
     df_stand = pd.DataFrame(list(punten_telling.items()), columns=["Speler", "Totaal Punten"]).sort_values(by="Totaal Punten", ascending=False)
-    df_stand.insert(0, "Positie", range(1, len(df_stand) + 1))  # Positie begint bij 1
     return df_stand
 
 # Laad de opgeslagen data
@@ -51,15 +50,14 @@ df_races = load_data()
 st.set_page_config(page_title="F1 Kampioenschap 2025", layout="wide")
 st.title("🏎️ F1 Online Kampioenschap 2025")
 
-# Dropdown voor race selectie in de sidebar
+# Sidebar voor GP selectie en invoer
 selected_race = st.sidebar.selectbox("📅 Selecteer een Grand Prix", ["Geen"] + RACES)
-
 if selected_race != "Geen":
-    st.subheader(selected_race)
+    st.sidebar.subheader(selected_race)
     race_index = RACES.index(selected_race)
-    for pos in range(1, 21):
-        df_races.at[race_index, f"P{pos}"] = st.selectbox(f"Positie {pos}", ["Geen"] + SPELERS, key=f"{selected_race}_P{pos}")
-    df_races.at[race_index, "Snelste Ronde"] = st.selectbox("🏁 Snelste Ronde", ["Geen"] + SPELERS, key=f"{selected_race}_SnelsteRonde")
+    for speler in SPELERS:
+        df_races.at[race_index, speler] = st.sidebar.selectbox(f"Positie voor {speler}", list(range(1, 21)), key=f"{selected_race}_{speler}")
+    df_races.at[race_index, "Snelste Ronde"] = st.sidebar.selectbox("🏁 Snelste Ronde", ["Geen"] + SPELERS, key=f"{selected_race}_SnelsteRonde")
 
 # Opslaan en berekenen
 if st.sidebar.button("📥 Opslaan & Stand Berekenen"):
@@ -70,24 +68,18 @@ if st.sidebar.button("📥 Opslaan & Stand Berekenen"):
 # Toon de huidige ranglijst
 df_stand = bereken_punten(df_races)
 st.header("Huidige Stand")
-st.dataframe(df_stand, height=400, width=600)
+st.dataframe(df_stand.iloc[:, 1:], height=400, width=600)  # Eerste kolom verwijderen
 
 # Podium visualisatie
 st.subheader("🏆 Podium")
 if len(df_stand) >= 3:
     podium_names = [df_stand.iloc[1]['Speler'], df_stand.iloc[0]['Speler'], df_stand.iloc[2]['Speler']]
-    podium_points = [df_stand.iloc[1]['Totaal Punten'], df_stand.iloc[0]['Totaal Punten'], df_stand.iloc[2]['Totaal Punten']]
     colors = ["silver", "gold", "#cd7f32"]  # Zilver, Goud, Brons
-    heights = [2, 3, 1.5]  # Hoogte van de podiumblokken
-    fig, ax = plt.subplots()
-    ax.bar(podium_names, heights, color=colors, width=0.5)
-    ax.set_xticks(range(len(podium_names)))
-    ax.set_xticklabels(podium_names, fontsize=12)
-    ax.set_yticks([])
-    ax.set_title("Podium Stand")
-    for i, txt in enumerate(podium_points):
-        ax.text(i, heights[i] + 0.1, f"{txt} Ptn", ha='center', fontsize=12, fontweight='bold')
-    st.pyplot(fig)
+    medals = ["🥈", "🥇", "🥉"]
+
+    for i in range(3):
+        st.write(f"{medals[i]} {podium_names[i]}")
 else:
     st.write("Nog niet genoeg data om een podium te tonen.")
+
 
