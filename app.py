@@ -79,13 +79,13 @@ if selected_race != "Huidig Klassement":
         if race_index is not None:
             for pos in range(1, 21):
                 if df_races.at[race_index, f"P{pos}"] == speler:
-                    existing_position = pos
+                    existing_position = str(pos)
                     break
 
         race_results[speler] = st.sidebar.selectbox(
             f"{speler}",
-            ["Geen"] + list(range(1, 21)),
-            index=(["Geen"] + list(range(1, 21))).index(str(existing_position)) if existing_position != "Geen" else 0
+            ["Geen"] + [str(i) for i in range(1, 21)],  # ✅ Alle waarden omgezet naar str
+            index=(["Geen"] + [str(i) for i in range(1, 21)]).index(existing_position) if existing_position != "Geen" else 0
         )
 
     # ✅ Direct opslaan & updaten bij klik op "Opslaan"
@@ -93,7 +93,7 @@ if selected_race != "Huidig Klassement":
         if race_index is not None:
             for speler, positie in race_results.items():
                 if positie != "Geen":
-                    df_races.at[race_index, f"P{positie}"] = speler
+                    df_races.at[race_index, f"P{int(positie)}"] = speler  # ✅ Positie correct als int opslaan
             save_data(df_races)
 
         # 🔄 **Fix: `st.rerun()` in plaats van `st.experimental_rerun()`**
