@@ -90,4 +90,3 @@ else:
     st.write("Nog niet genoeg data om een podium te tonen.")
 
 
-
