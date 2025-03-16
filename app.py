@@ -53,6 +53,7 @@ def bereken_punten(df):
                 punten_telling[speler] += PUNTEN_SYSTEEM[pos]
                 race_telling[speler] += 1
 
+        # Extra punt voor de snelste ronde
         if pd.notna(row.get('Snelste Ronde')) and row['Snelste Ronde'] in punten_telling:
             punten_telling[row['Snelste Ronde']] += 1
 
@@ -71,11 +72,12 @@ def bereken_punten_race(race_data):
         if pd.notna(speler):
             punten_telling[speler] = PUNTEN_SYSTEEM[pos]
 
+    # Extra punt voor de snelste ronde
     if pd.notna(race_data.get('Snelste Ronde')) and race_data['Snelste Ronde'] in punten_telling:
         punten_telling[race_data['Snelste Ronde']] += 1
 
     df_race_stand = pd.DataFrame(list(punten_telling.items()), columns=["Speler", "Punten"])
-    df_race_stand["Positie"] = range(1, len(df_race_stand) + 1)  # ✅ Positie toevoegen
+    df_race_stand["Positie"] = range(1, len(df_race_stand) + 1)  # Positie toevoegen
     df_race_stand = df_race_stand[["Positie", "Speler", "Punten"]].sort_values(by="Positie").reset_index(drop=True)
 
     return df_race_stand
@@ -142,7 +144,7 @@ if selected_race != "Huidig Klassement":
 
         st.rerun()
 
-# 🎖️ Podium weergave
+# 🎖️ Podium weergave (met bovenaan-uitlijning)
 def toon_podium(df_podium):
     if len(df_podium) >= 3:
         podium = df_podium.iloc[:3]
@@ -151,7 +153,8 @@ def toon_podium(df_podium):
             .podium-container {{
                 display: flex;
                 justify-content: center;
-                align-items: flex-end;
+                /* Uitlijning aan de bovenkant i.p.v. onderkant */
+                align-items: flex-start;
                 text-align: center;
                 margin-bottom: 40px;
             }}
@@ -166,9 +169,21 @@ def toon_podium(df_podium):
                 align-items: center;
                 padding: 15px;
             }}
-            .gold {{ background-color: gold; font-size: 30px; height: 160px; }}
-            .silver {{ background-color: silver; font-size: 26px; height: 120px; }}
-            .bronze {{ background-color: #cd7f32; font-size: 24px; height: 100px; }}
+            .gold {{
+                background-color: gold;
+                font-size: 30px;
+                height: 160px;
+            }}
+            .silver {{
+                background-color: silver;
+                font-size: 26px;
+                height: 120px;
+            }}
+            .bronze {{
+                background-color: #cd7f32;
+                font-size: 24px;
+                height: 100px;
+            }}
         </style>
 
         <div class="podium-container">
@@ -190,4 +205,5 @@ else:
     df_race_stand = bereken_punten_race(race_data)
     toon_podium(df_race_stand)
     st.dataframe(df_race_stand, hide_index=True, height=400, width=600)
+
 
