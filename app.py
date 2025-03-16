@@ -68,22 +68,32 @@ if selected_race == "Huidig Klassement":
     st.subheader("🏆 Algemeen Klassement")
     df_stand = bereken_punten(df_races)
     
-    # Toon podium met medailles
+    # Toon podium met professionele opmaak
     if len(df_stand) >= 3:
         podium = df_stand.iloc[:3]
         st.markdown(f"""
-        <div style="display: flex; justify-content: center;">
-            <div style="text-align: center; margin: 20px;">
-                <h1 style="color: gold;">🥇 {podium.iloc[0]['Speler']}</h1>
-            </div>
-        </div>
-        <div style="display: flex; justify-content: center;">
-            <div style="text-align: center; margin: 20px;">
-                <h2 style="color: silver;">🥈 {podium.iloc[1]['Speler']}</h2>
-            </div>
-            <div style="text-align: center; margin: 20px;">
-                <h2 style="color: #cd7f32;">🥉 {podium.iloc[2]['Speler']}</h2>
-            </div>
+        <style>
+            .podium-container {{
+                display: flex;
+                justify-content: center;
+                align-items: flex-end;
+                text-align: center;
+                margin-bottom: 40px;
+            }}
+            .podium-item {{
+                padding: 20px;
+                border-radius: 10px;
+                font-weight: bold;
+            }}
+            .gold {{ background-color: gold; font-size: 28px; padding: 30px; }}
+            .silver {{ background-color: silver; font-size: 24px; padding: 25px; }}
+            .bronze {{ background-color: #cd7f32; font-size: 22px; padding: 20px; }}
+        </style>
+
+        <div class="podium-container">
+            <div class="podium-item silver">🥈 {podium.iloc[1]['Speler']}</div>
+            <div class="podium-item gold">🥇 {podium.iloc[0]['Speler']}</div>
+            <div class="podium-item bronze">🥉 {podium.iloc[2]['Speler']}</div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -105,25 +115,8 @@ else:
 
     df_race_stand = pd.DataFrame(race_stand, columns=["Speler", "Punten"]).sort_values(by="Punten", ascending=False)
 
-    # Podium per race
-    if len(df_race_stand) >= 3:
-        podium = df_race_stand.iloc[:3]
-        st.markdown(f"""
-        <div style="display: flex; justify-content: center;">
-            <div style="text-align: center; margin: 20px;">
-                <h1 style="color: gold;">🥇 {podium.iloc[0]['Speler']}</h1>
-            </div>
-        </div>
-        <div style="display: flex; justify-content: center;">
-            <div style="text-align: center; margin: 20px;">
-                <h2 style="color: silver;">🥈 {podium.iloc[1]['Speler']}</h2>
-            </div>
-            <div style="text-align: center; margin: 20px;">
-                <h2 style="color: #cd7f32;">🥉 {podium.iloc[2]['Speler']}</h2>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
     # Stand voor deze race zonder index
     st.subheader(f"📊 Stand {selected_race}")
     st.dataframe(df_race_stand.set_index("Speler"), height=400, width=600)
+
+
