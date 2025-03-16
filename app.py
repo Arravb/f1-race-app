@@ -15,7 +15,7 @@ DATA_FILE = "races_data.csv"
 
 # Races en kolommen
 RACES = ["Australië GP", "China GP", "Japan GP", "Bahrein GP", "Saoedi-Arabië GP"]
-COLUMNS = ["P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P9", "P10", "P11", "P12", "P13", "P14", "P15", "P16", "P17", "P18", "P19", "P20", "Snelste Ronde"]
+COLUMNS = [f"P{i}" for i in range(1, 21)] + ["Snelste Ronde"]
 
 # Functie om opgeslagen data te laden
 def load_data():
@@ -50,7 +50,6 @@ df_races = load_data()
 # Streamlit UI
 st.set_page_config(page_title="F1 Kampioenschap 2025", layout="wide")
 st.title("🏎️ F1 Online Kampioenschap 2025")
-st.write("Beheer de race-uitslagen en bekijk de actuele ranglijst. De gegevens worden opgeslagen en blijven bewaard.")
 
 # Dropdown voor race selectie in de sidebar
 selected_race = st.sidebar.selectbox("📅 Selecteer een Grand Prix", ["Geen"] + RACES)
@@ -58,8 +57,9 @@ selected_race = st.sidebar.selectbox("📅 Selecteer een Grand Prix", ["Geen"] +
 if selected_race != "Geen":
     st.subheader(selected_race)
     race_index = RACES.index(selected_race)
-    for col in COLUMNS:
-        df_races.at[race_index, col] = st.selectbox(f"{col} ({selected_race})", ["Geen"] + SPELERS, key=f"{selected_race}_{col}", index=(["Geen"] + SPELERS).index(df_races.at[race_index, col] if pd.notna(df_races.at[race_index, col]) else "Geen"))
+    for pos in range(1, 21):
+        df_races.at[race_index, f"P{pos}"] = st.selectbox(f"Positie {pos}", ["Geen"] + SPELERS, key=f"{selected_race}_P{pos}")
+    df_races.at[race_index, "Snelste Ronde"] = st.selectbox("🏁 Snelste Ronde", ["Geen"] + SPELERS, key=f"{selected_race}_SnelsteRonde")
 
 # Opslaan en berekenen
 if st.sidebar.button("📥 Opslaan & Stand Berekenen"):
@@ -78,11 +78,16 @@ if len(df_stand) >= 3:
     podium_names = [df_stand.iloc[1]['Speler'], df_stand.iloc[0]['Speler'], df_stand.iloc[2]['Speler']]
     podium_points = [df_stand.iloc[1]['Totaal Punten'], df_stand.iloc[0]['Totaal Punten'], df_stand.iloc[2]['Totaal Punten']]
     colors = ["silver", "gold", "#cd7f32"]  # Zilver, Goud, Brons
-
+    heights = [2, 3, 1.5]  # Hoogte van de podiumblokken
     fig, ax = plt.subplots()
-    ax.bar(podium_names, podium_points, color=colors)
-    ax.set_ylabel("Punten")
+    ax.bar(podium_names, heights, color=colors, width=0.5)
+    ax.set_xticks(range(len(podium_names)))
+    ax.set_xticklabels(podium_names, fontsize=12)
+    ax.set_yticks([])
     ax.set_title("Podium Stand")
+    for i, txt in enumerate(podium_points):
+        ax.text(i, heights[i] + 0.1, f"{txt} Ptn", ha='center', fontsize=12, fontweight='bold')
     st.pyplot(fig)
 else:
     st.write("Nog niet genoeg data om een podium te tonen.")
+
