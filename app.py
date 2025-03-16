@@ -27,17 +27,12 @@ COLUMNS = ["P" + str(i) for i in range(1, 21)] + ["Snelste Ronde"]
 
 # ✅ Functie om opgeslagen data te laden
 def load_data():
-    if not os.path.exists(DATA_FILE):  # ✅ Check of bestand bestaat
+    if not os.path.exists(DATA_FILE):
         df = pd.DataFrame(columns=["Race"] + COLUMNS)
         df["Race"] = RACES
         save_data(df)  # ✅ Sla de races direct op
     else:
         df = pd.read_csv(DATA_FILE)
-
-    # Zorg ervoor dat alle kolommen correct zijn
-    for col in COLUMNS:
-        if col not in df.columns:
-            df[col] = pd.NA
     return df
 
 # ✅ Functie om data op te slaan
@@ -78,42 +73,35 @@ selected_race = st.sidebar.selectbox("📅 Selecteer een Grand Prix", ["Huidig K
 if selected_race != "Huidig Klassement":
     st.sidebar.subheader(f"🏁 Posities {selected_race}")
 
-    if selected_race in df_races["Race"].values:
-        race_index = df_races[df_races["Race"] == selected_race].index[0]
-    else:
-        race_index = None
-
+    race_index = df_races[df_races["Race"] == selected_race].index[0] if selected_race in df_races["Race"].values else None
     race_results = {}
 
     for speler in SPELERS:
         # Haal bestaande positie op, anders "Geen"
-        existing_position = None
+        existing_position = "Geen"
         if race_index is not None:
             for pos in range(1, 21):
                 if df_races.at[race_index, f"P{pos}"] == speler:
                     existing_position = pos
                     break
 
-        # ✅ Fix: Correcte dropdown zonder extra haakjes
-        pos = st.sidebar.selectbox(
+        # ✅ Fix: Opslaan en direct bijwerken na selectie
+        race_results[speler] = st.sidebar.selectbox(
             f"{speler}",
             ["Geen"] + list(range(1, 21)),
-            index=(["Geen"] + list(range(1, 21))).index(str(existing_position)) if existing_position else 0
+            index=["Geen"] + list(range(1, 21)).index(str(existing_position)) if existing_position != "Geen" else 0
         )
-        race_results[speler] = pos
 
     # ✅ Direct opslaan & updaten bij klik op "Opslaan"
     if st.sidebar.button("📥 Opslaan"):
         if race_index is not None:
-            # ✅ Opslaan van nieuwe resultaten
             for speler, positie in race_results.items():
                 if positie != "Geen":
                     df_races.at[race_index, f"P{positie}"] = speler
             save_data(df_races)
-        
-        # 🔄 Live update NA opslaan
-        st.session_state["update"] = True
-        st.rerun()  # Herstart de app voor directe weergave
+
+        # 🔄 Live update direct na opslaan
+        st.experimental_rerun()
 
 # 🎖️ Podium weergave
 def toon_podium(df_podium):
