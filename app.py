@@ -63,6 +63,43 @@ st.title("🏎️ F1 Online Kampioenschap 2025")
 # Dropdown voor race selectie in de sidebar
 selected_race = st.sidebar.selectbox("📅 Selecteer een Grand Prix", ["Huidig Klassement"] + RACES)
 
+# 🏁 Als een specifieke race is geselecteerd, toon de invoeropties in de sidebar
+if selected_race != "Huidig Klassement":
+    st.sidebar.subheader(f"🏁 Posities {selected_race}")
+
+    # Controleer of de race in de dataset zit
+    if selected_race in df_races["Race"].values:
+        race_index = df_races[df_races["Race"] == selected_race].index[0]
+    else:
+        race_index = None
+
+    race_results = {}
+
+    for speler in SPELERS:
+        # Bestaande waarde ophalen als deze al is opgeslagen, anders "Geen"
+        current_pos = (
+            df_races.loc[race_index, df_races.columns[df_races.iloc[race_index] == speler].tolist()[0]]
+            if race_index is not None and speler in df_races.iloc[race_index].values
+            else "Geen"
+        )
+
+        # Dropdown voor positie-invoer
+        pos = st.sidebar.selectbox(
+            f"{speler}",
+            ["Geen"] + [str(i) for i in range(1, 21)],
+            index=["Geen"] + [str(i) for i in range(1, 21)].index(str(current_pos)) if str(current_pos) in [str(i) for i in range(1, 21)] else 0,
+        )
+        race_results[speler] = pos
+
+    # Knop om resultaten op te slaan
+    if st.sidebar.button("📥 Opslaan"):
+        if race_index is not None:
+            for speler, positie in race_results.items():
+                if positie != "Geen":
+                    df_races.at[race_index, f"P{positie}"] = speler
+        save_data(df_races)
+        st.sidebar.success("✅ Resultaten opgeslagen!")
+
 # Functie voor podium weergave
 def toon_podium(df_podium):
     if len(df_podium) >= 3:
@@ -100,36 +137,16 @@ def toon_podium(df_podium):
         """, unsafe_allow_html=True)
 
 if selected_race == "Huidig Klassement":
-    # Toon het algemene klassement
     st.subheader("🏆 Algemeen Klassement")
     df_stand = bereken_punten(df_races)
-    
-    # Toon podium voor algemeen klassement
     toon_podium(df_stand)
-
-    # Toon de stand als tabel zonder index
     st.subheader("📊 Huidige Stand")
     st.dataframe(df_stand.set_index("Speler"), height=400, width=600)
 
 else:
-    # Toon de resultaten voor de geselecteerde race
     st.subheader(f"🏁 {selected_race} Resultaten")
-    
-    race_data = df_races[df_races["Race"] == selected_race].iloc[0]
-    
-    race_stand = []
-    for pos in range(1, 21):
-        if f"P{pos}" in race_data and pd.notna(race_data[f"P{pos}"]):
-            speler = race_data[f"P{pos}"]
-            race_stand.append((speler, PUNTEN_SYSTEEM[pos]))
-
-    df_race_stand = pd.DataFrame(race_stand, columns=["Speler", "Punten"]).sort_values(by="Punten", ascending=False)
-
-    # Toon podium voor deze race
+    df_race_stand = bereken_punten(df_races[df_races["Race"] == selected_race])
     toon_podium(df_race_stand)
-
-    # Stand voor deze race zonder index
     st.subheader(f"📊 Stand {selected_race}")
     st.dataframe(df_race_stand.set_index("Speler"), height=400, width=600)
-
 
