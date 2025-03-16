@@ -59,7 +59,7 @@ if selected_race != "Geen":
     st.subheader(selected_race)
     race_index = RACES.index(selected_race)
     for col in COLUMNS:
-        df_races.at[race_index, col] = st.selectbox(f"{col} ({selected_race})", ["Geen"] + SPELERS, key=f"{selected_race}_{col}", index=([""Geen"] + SPELERS).index(df_races.at[race_index, col] if pd.notna(df_races.at[race_index, col]) else "Geen"))
+        df_races.at[race_index, col] = st.selectbox(f"{col} ({selected_race})", ["Geen"] + SPELERS, key=f"{selected_race}_{col}", index=(["Geen"] + SPELERS).index(df_races.at[race_index, col] if pd.notna(df_races.at[race_index, col]) else "Geen"))
 
 # Opslaan en berekenen
 if st.sidebar.button("📥 Opslaan & Stand Berekenen"):
