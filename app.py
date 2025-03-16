@@ -3,6 +3,7 @@ import pandas as pd
 import os
 import time
 import matplotlib.pyplot as plt
+import numpy as np
 
 # F1 puntensysteem
 PUNTEN_SYSTEEM = {1: 25, 2: 18, 3: 15, 4: 12, 5: 10, 6: 8, 7: 6, 8: 4, 9: 2, 10: 1, 11: 0, 12: 0, 13: 0, 14: 0, 15: 0, 16: 0, 17: 0, 18: 0, 19: 0, 20: 0}
@@ -65,10 +66,11 @@ if st.sidebar.button("📥 Opslaan & Stand Berekenen"):
     save_data(df_races)
     st.success("✅ Gegevens opgeslagen!")
 
-# Toon de huidige ranglijst
-df_stand = bereken_punten(df_races)
+# Toon de huidige ranglijst als lijst
 st.header("Huidige Stand")
-st.dataframe(df_stand, height=400, width=600)  # Enkel Naam en Punten
+df_stand = bereken_punten(df_races)
+for index, row in df_stand.iterrows():
+    st.write(f"{index+1}. {row['Naam']} - {row['Punten']} punten")
 
 # Podium visualisatie
 st.subheader("🏆 Podium")
@@ -76,17 +78,15 @@ if len(df_stand) >= 3:
     podium_names = [df_stand.iloc[1]['Naam'], df_stand.iloc[0]['Naam'], df_stand.iloc[2]['Naam']]
     colors = ["silver", "gold", "#cd7f32"]  # Zilver, Goud, Brons
     heights = [2, 3, 1.5]  # Hoogte van de podiumblokken
-    medals = ["🥈", "🥇", "🥉"]
-    fig, ax = plt.subplots(figsize=(5, 4))
-    ax.bar(podium_names, heights, color=colors, width=0.5)
-    ax.set_xticks(range(len(podium_names)))
-    ax.set_xticklabels(podium_names, fontsize=14, fontweight='bold')
+
+    fig, ax = plt.subplots(figsize=(6, 5))
+    ax.bar(["2e", "1e", "3e"], heights, color=colors, width=0.6)
+    ax.set_xticklabels([podium_names[0], podium_names[1], podium_names[2]], fontsize=14, fontweight='bold')
     ax.set_yticks([])
     ax.set_title("Podium Stand", fontsize=16)
-    for i, txt in enumerate(medals):
-        ax.text(i, heights[i] + 0.1, txt, ha='center', fontsize=18, fontweight='bold')
+    for i, name in enumerate(podium_names):
+        ax.text(i, heights[i] + 0.1, name, ha='center', fontsize=12, fontweight='bold')
     st.pyplot(fig)
 else:
     st.write("Nog niet genoeg data om een podium te tonen.")
-
 
