@@ -89,6 +89,18 @@ df_races = load_data()
 st.set_page_config(page_title="F1 Kampioenschap 2025", layout="wide")
 st.title("🏎️ F1 Online Kampioenschap 2025")
 
+# -- Standaard CSS om ook de tabel onder het podium te centreren --
+st.markdown("""
+<style>
+/* Container waarmee we de dataframe ook centreren, net als het podium */
+.table-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # ✅ Dropdown voor race selectie in de sidebar
 selected_race = st.sidebar.selectbox("📅 Selecteer een Grand Prix", ["Huidig Klassement"] + RACES)
 
@@ -142,10 +154,11 @@ if selected_race != "Huidig Klassement":
 
             save_data(df_races)
 
-        st.rerun()
+        st.experimental_rerun()
 
-# 🎖️ Podium weergave (met bovenaan-uitlijning)
+# 🎖️ Podium weergave
 def toon_podium(df_podium):
+    """Toont alleen de top 3 in een 'podium-container' gecentreerd."""
     if len(df_podium) >= 3:
         podium = df_podium.iloc[:3]
         st.markdown(f"""
@@ -153,10 +166,9 @@ def toon_podium(df_podium):
             .podium-container {{
                 display: flex;
                 justify-content: center;
-                /* Uitlijning aan de bovenkant i.p.v. onderkant */
-                align-items: flex-start;
+                align-items: flex-end;
                 text-align: center;
-                margin-bottom: 40px;
+                margin-bottom: 20px; /* iets kleinere marge zodat de tabel dichterbij staat */
             }}
             .podium-item {{
                 border-radius: 10px;
@@ -193,17 +205,24 @@ def toon_podium(df_podium):
         </div>
         """, unsafe_allow_html=True)
 
-# 🔄 Algemene klassement
+# 🔄 Algemene klassement (of specifieke GP)
 if selected_race == "Huidig Klassement":
     st.subheader("🏆 Algemeen Klassement")
     df_stand = bereken_punten(df_races)
     toon_podium(df_stand)
+
+    # De tabel in een extra container zodat hij ook gecentreerd is
+    st.markdown("<div class='table-container'>", unsafe_allow_html=True)
     st.dataframe(df_stand, hide_index=True, height=400, width=600)
+    st.markdown("</div>", unsafe_allow_html=True)
+
 else:
     st.subheader(f"🏁 {selected_race} Resultaten")
     race_data = df_races[df_races["Race"] == selected_race].iloc[0]
     df_race_stand = bereken_punten_race(race_data)
     toon_podium(df_race_stand)
-    st.dataframe(df_race_stand, hide_index=True, height=400, width=600)
 
+    st.markdown("<div class='table-container'>", unsafe_allow_html=True)
+    st.dataframe(df_race_stand, hide_index=True, height=400, width=600)
+    st.markdown("</div>", unsafe_allow_html=True)
 
