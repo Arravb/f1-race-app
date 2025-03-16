@@ -25,12 +25,12 @@ DATA_FILE = "races_data.csv"
 # ✅ Kolomnamen
 COLUMNS = ["P" + str(i) for i in range(1, 21)] + ["Snelste Ronde"]
 
-# ✅ Functie om opgeslagen data te laden
+# ✅ Functie om opgeslagen data te laden en race reset correct te herstellen
 def load_data():
-    if not os.path.exists(DATA_FILE):
+    if not os.path.exists(DATA_FILE) or os.stat(DATA_FILE).st_size == 0:  # ✅ Controle op leeg bestand
         df = pd.DataFrame(columns=["Race"] + COLUMNS)
         df["Race"] = RACES
-        save_data(df)  # ✅ Sla de races direct op
+        save_data(df)  # ✅ Sla direct op om een lege lijst te voorkomen
     else:
         df = pd.read_csv(DATA_FILE)
     return df
@@ -77,7 +77,6 @@ if selected_race != "Huidig Klassement":
     race_results = {}
 
     for speler in SPELERS:
-        # Haal bestaande positie op, anders "Geen"
         existing_position = "Geen"
         if race_index is not None:
             for pos in range(1, 21):
@@ -85,7 +84,6 @@ if selected_race != "Huidig Klassement":
                     existing_position = pos
                     break
 
-        # ✅ Fix: Opslaan en direct bijwerken na selectie
         race_results[speler] = st.sidebar.selectbox(
             f"{speler}",
             ["Geen"] + list(range(1, 21)),
@@ -154,5 +152,3 @@ else:
     toon_podium(df_race_stand)
     st.subheader(f"📊 Stand {selected_race}")
     st.dataframe(df_race_stand.set_index("Speler"), height=400, width=600)
-
-
