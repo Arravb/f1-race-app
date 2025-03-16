@@ -1,8 +1,6 @@
 import streamlit as st
 import pandas as pd
 import os
-import time
-import matplotlib.pyplot as plt
 
 # F1 puntensysteem
 PUNTEN_SYSTEEM = {1: 25, 2: 18, 3: 15, 4: 12, 5: 10, 6: 8, 7: 6, 8: 4, 9: 2, 10: 1, 
@@ -33,15 +31,22 @@ def save_data(df):
 
 # Functie om punten te berekenen
 def bereken_punten(df):
-    punten_telling = {speler: 1 for speler in SPELERS}  # Start bij 1 ipv 0
+    punten_telling = {speler: 0 for speler in SPELERS}
+    race_telling = {speler: 0 for speler in SPELERS}
+
     for _, row in df.iterrows():
         for pos in range(1, 21):
             speler = row.get(f'P{pos}')
             if pd.notna(speler) and speler in punten_telling:
                 punten_telling[speler] += PUNTEN_SYSTEEM[pos]
+                race_telling[speler] += 1
+
         if pd.notna(row.get('Snelste Ronde')) and row['Snelste Ronde'] in punten_telling:
             punten_telling[row['Snelste Ronde']] += 1
+
     df_stand = pd.DataFrame(list(punten_telling.items()), columns=["Speler", "Totaal Punten"]).sort_values(by="Totaal Punten", ascending=False)
+    df_stand["Aantal Races"] = df_stand["Speler"].map(race_telling)
+
     return df_stand
 
 # Laad de opgeslagen data
@@ -52,56 +57,70 @@ st.set_page_config(page_title="F1 Kampioenschap 2025", layout="wide")
 st.title("🏎️ F1 Online Kampioenschap 2025")
 
 # Dropdown voor race selectie in de sidebar
-selected_race = st.sidebar.selectbox("📅 Selecteer een Grand Prix", RACES)
+selected_race = st.sidebar.selectbox("📅 Selecteer een Grand Prix", ["Huidig Klassement"] + RACES)
 
-if selected_race:
-    st.subheader(selected_race)
-    race_index = RACES.index(selected_race)
+if selected_race == "Huidig Klassement":
+    # Toon het algemene klassement
+    st.subheader("🏆 Algemeen Klassement")
+    df_stand = bereken_punten(df_races)
     
-    for col in COLUMNS:
-        # Controleer of de kolom bestaat in df_races en voeg toe als nodig
-        if col not in df_races.columns:
-            df_races[col] = pd.NA  
-        
-        # Waarde ophalen zonder KeyError
-        huidige_waarde = df_races.at[race_index, col] if pd.notna(df_races.at[race_index, col]) else "Geen"
+    # Toon podium met medailles
+    if len(df_stand) >= 3:
+        podium = df_stand.iloc[:3]
+        st.markdown(f"""
+        <div style="display: flex; justify-content: center;">
+            <div style="text-align: center; margin: 20px;">
+                <h1 style="color: gold;">🥇 {podium.iloc[0]['Speler']}</h1>
+            </div>
+        </div>
+        <div style="display: flex; justify-content: center;">
+            <div style="text-align: center; margin: 20px;">
+                <h2 style="color: silver;">🥈 {podium.iloc[1]['Speler']}</h2>
+            </div>
+            <div style="text-align: center; margin: 20px;">
+                <h2 style="color: #cd7f32;">🥉 {podium.iloc[2]['Speler']}</h2>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
-        df_races.at[race_index, col] = st.sidebar.selectbox(
-            f"{col} ({selected_race})",
-            ["Geen"] + SPELERS,
-            key=f"{selected_race}_{col}",
-            index=(["Geen"] + SPELERS).index(huidige_waarde)
-        )
+    # Toon de stand als tabel
+    st.subheader("📊 Huidige Stand")
+    st.dataframe(df_stand, height=400, width=600)
 
-# Opslaan en berekenen
-if st.sidebar.button("📥 Opslaan & Stand Berekenen"):
-    df_races.replace("Geen", pd.NA, inplace=True)
-    save_data(df_races)
-    st.success("✅ Gegevens opgeslagen!")
-
-# Toon de huidige ranglijst als lijst
-df_stand = bereken_punten(df_races)
-st.header("Huidige Stand")
-for index, row in df_stand.iterrows():
-    st.write(f"🏁 {row['Speler']} - {row['Totaal Punten']} punten")
-
-# Podium visualisatie
-st.subheader("🏆 Podium")
-if len(df_stand) >= 3:
-    podium_names = [df_stand.iloc[1]['Speler'], df_stand.iloc[0]['Speler'], df_stand.iloc[2]['Speler']]
-    podium_colors = ["silver", "gold", "#cd7f32"]  # Zilver, Goud, Brons
-    podium_positions = [2, 1, 3]  # Links, midden, rechts
-
-    fig, ax = plt.subplots(figsize=(6, 4))
-    ax.bar(podium_positions, [2, 3, 1], color=podium_colors, width=0.5)  # Simuleert een podium effect
-    for i, txt in enumerate(podium_names):
-        ax.text(podium_positions[i], [2, 3, 1][i] + 0.2, txt, ha='center', fontsize=12, fontweight='bold')
-
-    ax.set_xticks(podium_positions)
-    ax.set_xticklabels(["🥈", "🥇", "🥉"], fontsize=15)
-    ax.set_yticks([])
-    ax.set_frame_on(False)
-    st.pyplot(fig)
 else:
-    st.write("Nog niet genoeg data om een podium te tonen.")
+    # Toon de resultaten voor de geselecteerde race
+    st.subheader(f"🏁 {selected_race} Resultaten")
+    
+    race_data = df_races[df_races["Race"] == selected_race].iloc[0]
+    
+    race_stand = []
+    for pos in range(1, 21):
+        speler = race_data[f"P{pos}"]
+        if pd.notna(speler) and speler in PUNTEN_SYSTEEM:
+            race_stand.append((speler, PUNTEN_SYSTEEM[pos]))
+
+    df_race_stand = pd.DataFrame(race_stand, columns=["Speler", "Punten"]).sort_values(by="Punten", ascending=False)
+
+    # Podium per race
+    if len(df_race_stand) >= 3:
+        podium = df_race_stand.iloc[:3]
+        st.markdown(f"""
+        <div style="display: flex; justify-content: center;">
+            <div style="text-align: center; margin: 20px;">
+                <h1 style="color: gold;">🥇 {podium.iloc[0]['Speler']}</h1>
+            </div>
+        </div>
+        <div style="display: flex; justify-content: center;">
+            <div style="text-align: center; margin: 20px;">
+                <h2 style="color: silver;">🥈 {podium.iloc[1]['Speler']}</h2>
+            </div>
+            <div style="text-align: center; margin: 20px;">
+                <h2 style="color: #cd7f32;">🥉 {podium.iloc[2]['Speler']}</h2>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # Stand voor deze race
+    st.subheader(f"📊 Stand {selected_race}")
+    st.dataframe(df_race_stand, height=400, width=600)
 
