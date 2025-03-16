@@ -87,9 +87,9 @@ if selected_race == "Huidig Klassement":
         </div>
         """, unsafe_allow_html=True)
 
-    # Toon de stand als tabel
+    # Toon de stand als tabel zonder index
     st.subheader("📊 Huidige Stand")
-    st.dataframe(df_stand, height=400, width=600)
+    st.dataframe(df_stand.set_index("Speler"), height=400, width=600)
 
 else:
     # Toon de resultaten voor de geselecteerde race
@@ -124,6 +124,6 @@ else:
         </div>
         """, unsafe_allow_html=True)
 
-    # Stand voor deze race
+    # Stand voor deze race zonder index
     st.subheader(f"📊 Stand {selected_race}")
-    st.dataframe(df_race_stand, height=400, width=600)
+    st.dataframe(df_race_stand.set_index("Speler"), height=400, width=600)
