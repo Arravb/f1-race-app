@@ -1,12 +1,13 @@
 import streamlit as st
 import pandas as pd
 import os
+import time
 
 # F1 puntensysteem
 PUNTEN_SYSTEEM = {1: 25, 2: 18, 3: 15, 4: 12, 5: 10, 6: 8, 7: 6, 8: 4, 9: 2, 10: 1}
 
 # Spelerslijst
-SPELERS = ["Arvin", "Roland", "Frank van Ofwegen", "Mahir", "Mario-VDH"]
+SPELERS = ["Arvin", "Roland", "Frank van Ofwegen", "Mahir", "Mario-VDH", "Nicky"]
 
 # Bestandsnaam voor opslag
 DATA_FILE = "races_data.csv"
@@ -30,7 +31,7 @@ def save_data(df):
 
 # Functie om punten te berekenen
 def bereken_punten(df):
-    punten_telling = {speler: 0 for speler in SPELERS}
+    punten_telling = {speler: 1 for speler in SPELERS}  # Start bij 1 ipv 0
     for _, row in df.iterrows():
         for pos in range(1, 11):
             speler = row.get(f'P{pos}')
@@ -48,12 +49,14 @@ st.set_page_config(page_title="F1 Kampioenschap 2025", layout="wide")
 st.title("🏎️ F1 Online Kampioenschap 2025")
 st.write("Beheer de race-uitslagen en bekijk de actuele ranglijst. De gegevens worden opgeslagen en blijven bewaard.")
 
-# Input voor races
-st.sidebar.header("📅 Race Uitslagen Invoeren")
-for i, race in enumerate(RACES):
-    st.sidebar.subheader(race)
+# Dropdown voor race selectie
+selected_race = st.selectbox("📅 Selecteer een Grand Prix", ["Geen"] + RACES)
+
+if selected_race != "Geen":
+    st.subheader(selected_race)
+    race_index = RACES.index(selected_race)
     for col in COLUMNS:
-        df_races.at[i, col] = st.sidebar.selectbox(f"{col} ({race})", ["Geen"] + SPELERS, key=f"{race}_{col}", index=(["Geen"] + SPELERS).index(df_races.at[i, col] if pd.notna(df_races.at[i, col]) else "Geen"))
+        df_races.at[race_index, col] = st.selectbox(f"{col} ({selected_race})", ["Geen"] + SPELERS, key=f"{selected_race}_{col}", index=(["Geen"] + SPELERS).index(df_races.at[race_index, col] if pd.notna(df_races.at[race_index, col]) else "Geen"))
 
 # Opslaan en berekenen
 if st.sidebar.button("📥 Opslaan & Stand Berekenen"):
@@ -64,4 +67,13 @@ if st.sidebar.button("📥 Opslaan & Stand Berekenen"):
 # Toon de huidige ranglijst
 df_stand = bereken_punten(df_races)
 st.header("🏆 Huidige Stand")
+
+# Animatie: Podium presentatie
+st.subheader("🏆 Podium")
+for i in range(min(3, len(df_stand))):  # Zorgt ervoor dat het niet crasht bij minder dan 3 spelers
+    time.sleep(0.5)
+    st.write(f"🥇 {df_stand.iloc[i]['Speler']} - {df_stand.iloc[i]['Totaal Punten']} punten")
+
 st.dataframe(df_stand, height=400, width=600)
+
+
