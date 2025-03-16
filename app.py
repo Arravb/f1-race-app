@@ -4,7 +4,7 @@ import os
 
 # ✅ Correcte F1 2025 racevolgorde
 RACES = [
-    "Bahrein GP", "Saoedi-Arabië GP", "Australië GP", "Japan GP", "China GP", "Miami GP",
+    "Australië GP", "China GP", "Japan GP", "Bahrein GP", "Saoedi-Arabië GP", "Miami GP",
     "Emilia-Romagna GP", "Monaco GP", "Canada GP", "Spanje GP", "Oostenrijk GP",
     "Groot-Brittannië GP", "Hongarije GP", "België GP", "Nederland GP", "Italië GP",
     "Azerbeidzjan GP", "Singapore GP", "Verenigde Staten GP", "Mexico GP",
@@ -27,11 +27,17 @@ COLUMNS = ["P" + str(i) for i in range(1, 21)] + ["Snelste Ronde"]
 
 # ✅ Functie om opgeslagen data te laden
 def load_data():
-    if os.path.exists(DATA_FILE):
-        df = pd.read_csv(DATA_FILE)
-    else:
+    if not os.path.exists(DATA_FILE):  # ✅ Check of bestand bestaat
         df = pd.DataFrame(columns=["Race"] + COLUMNS)
         df["Race"] = RACES
+        save_data(df)  # ✅ Sla de races direct op
+    else:
+        df = pd.read_csv(DATA_FILE)
+
+    # Zorg ervoor dat alle kolommen correct zijn
+    for col in COLUMNS:
+        if col not in df.columns:
+            df[col] = pd.NA
     return df
 
 # ✅ Functie om data op te slaan
@@ -159,3 +165,6 @@ else:
     toon_podium(df_race_stand)
     st.subheader(f"📊 Stand {selected_race}")
     st.dataframe(df_race_stand.set_index("Speler"), height=400, width=600)
+
+
+)
