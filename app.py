@@ -19,11 +19,15 @@ COLUMNS = ["P" + str(i) for i in range(1, 21)] + ["Snelste Ronde"]
 # Functie om opgeslagen data te laden
 def load_data():
     if os.path.exists(DATA_FILE):
-        return pd.read_csv(DATA_FILE)
+        df = pd.read_csv(DATA_FILE)
     else:
         df = pd.DataFrame(columns=["Race"] + COLUMNS)
         df["Race"] = RACES
-        return df
+    # Zorg ervoor dat alle kolommen bestaan
+    for col in COLUMNS:
+        if col not in df.columns:
+            df[col] = pd.NA
+    return df
 
 # Functie om data op te slaan
 def save_data(df):
@@ -95,8 +99,8 @@ else:
     
     race_stand = []
     for pos in range(1, 21):
-        speler = race_data[f"P{pos}"]
-        if pd.notna(speler) and speler in PUNTEN_SYSTEEM:
+        if f"P{pos}" in race_data and pd.notna(race_data[f"P{pos}"]):
+            speler = race_data[f"P{pos}"]
             race_stand.append((speler, PUNTEN_SYSTEEM[pos]))
 
     df_race_stand = pd.DataFrame(race_stand, columns=["Speler", "Punten"]).sort_values(by="Punten", ascending=False)
@@ -123,4 +127,3 @@ else:
     # Stand voor deze race
     st.subheader(f"📊 Stand {selected_race}")
     st.dataframe(df_race_stand, height=400, width=600)
-
