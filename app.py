@@ -6,14 +6,22 @@ import os
 PUNTEN_SYSTEEM = {1: 25, 2: 18, 3: 15, 4: 12, 5: 10, 6: 8, 7: 6, 8: 4, 9: 2, 10: 1, 
                   11: 0, 12: 0, 13: 0, 14: 0, 15: 0, 16: 0, 17: 0, 18: 0, 19: 0, 20: 0}
 
-# Spelerslijst
-SPELERS = ["Arvin", "Roland", "Frank van Ofwegen", "Mahir", "Mario-VDH", "Nicky"]
+# Spelerslijst (alfabetisch gesorteerd)
+SPELERS = sorted(["Arvin", "Frank van Ofwegen", "Mahir", "Mario-VDH", "Nicky", "Roland"])
 
 # Bestandsnaam voor opslag
 DATA_FILE = "races_data.csv"
 
-# Races en kolommen
-RACES = ["Australië GP", "China GP", "Japan GP", "Bahrein GP", "Saoedi-Arabië GP"]
+# Alle races van het seizoen
+RACES = [
+    "Bahrein GP", "Saoedi-Arabië GP", "Australië GP", "Japan GP", "China GP", "Miami GP", 
+    "Emilia-Romagna GP", "Monaco GP", "Canada GP", "Spanje GP", "Oostenrijk GP", 
+    "Groot-Brittannië GP", "Hongarije GP", "België GP", "Nederland GP", "Italië GP", 
+    "Azerbeidzjan GP", "Singapore GP", "Verenigde Staten GP", "Mexico GP", 
+    "Brazilië GP", "Las Vegas GP", "Qatar GP", "Abu Dhabi GP"
+]
+
+# Kolomnamen
 COLUMNS = ["P" + str(i) for i in range(1, 21)] + ["Snelste Ronde"]
 
 # Functie om opgeslagen data te laden
@@ -97,7 +105,10 @@ if selected_race != "Huidig Klassement":
                 if positie != "Geen":
                     df_races.at[race_index, f"P{positie}"] = speler
         save_data(df_races)
-        st.experimental_rerun()  # 🔄 Herlaad de app direct voor live update
+        
+        # 🔄 Gebruik `st.rerun()` in plaats van `st.experimental_rerun()`
+        st.session_state["update"] = True
+        st.rerun()  # Herstart correct
 
 # 🎖️ Podium weergave
 def toon_podium(df_podium):
@@ -149,3 +160,5 @@ else:
     toon_podium(df_race_stand)
     st.subheader(f"📊 Stand {selected_race}")
     st.dataframe(df_race_stand.set_index("Speler"), height=400, width=600)
+
+
