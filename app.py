@@ -58,7 +58,7 @@ def bereken_punten(df):
 
     df_stand = pd.DataFrame(list(punten_telling.items()), columns=["Speler", "Totaal Punten"])
     df_stand["Aantal Races"] = df_stand["Speler"].map(race_telling)
-    df_stand = df_stand.sort_values(by="Totaal Punten", ascending=False)
+    df_stand = df_stand.sort_values(by="Totaal Punten", ascending=False).reset_index(drop=True)  # ✅ Index verbergen
 
     return df_stand
 
@@ -75,7 +75,7 @@ def bereken_punten_race(race_data):
         punten_telling[race_data['Snelste Ronde']] += 1
 
     df_race_stand = pd.DataFrame(list(punten_telling.items()), columns=["Speler", "Punten"])
-    df_race_stand = df_race_stand.sort_values(by="Punten", ascending=False)
+    df_race_stand = df_race_stand.sort_values(by="Punten", ascending=False).reset_index(drop=True)  # ✅ Index verbergen
 
     return df_race_stand
 
@@ -160,11 +160,10 @@ if selected_race == "Huidig Klassement":
     st.subheader("🏆 Algemeen Klassement")
     df_stand = bereken_punten(df_races)
     toon_podium(df_stand)
-    st.dataframe(df_stand, height=400, width=600)
+    st.dataframe(df_stand, hide_index=True, height=400, width=600)
 else:
     st.subheader(f"🏁 {selected_race} Resultaten")
     race_data = df_races[df_races["Race"] == selected_race].iloc[0]
     df_race_stand = bereken_punten_race(race_data)
     toon_podium(df_race_stand)
-    st.dataframe(df_race_stand, height=400, width=600)
-
+    st.dataframe(df_race_stand, hide_index=True, height=400, width=600)
