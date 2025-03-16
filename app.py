@@ -77,15 +77,19 @@ def toon_podium(df_podium):
                 margin-bottom: 40px;
             }}
             .podium-item {{
-                padding: 20px;
                 border-radius: 10px;
                 font-weight: bold;
-                width: 150px;
-                margin: 5px;
+                width: 180px;
+                margin: 10px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                padding: 15px;
             }}
-            .gold {{ background-color: gold; font-size: 28px; padding: 30px; }}
-            .silver {{ background-color: silver; font-size: 24px; padding: 25px; }}
-            .bronze {{ background-color: #cd7f32; font-size: 22px; padding: 20px; }}
+            .gold {{ background-color: gold; font-size: 30px; height: 160px; }}
+            .silver {{ background-color: silver; font-size: 26px; height: 120px; }}
+            .bronze {{ background-color: #cd7f32; font-size: 24px; height: 100px; }}
         </style>
 
         <div class="podium-container">
