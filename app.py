@@ -62,7 +62,35 @@ def bereken_punten(df):
 
     return df_stand
 
-# ✅ Podium weergave
+# ✅ Functie om punten en posities te berekenen voor een specifieke race
+def bereken_punten_race(race_data):
+    punten_telling = {}
+
+    for pos in range(1, 21):
+        speler = race_data.get(f'P{pos}')
+        if pd.notna(speler):
+            punten_telling[speler] = PUNTEN_SYSTEEM[pos]
+
+    if pd.notna(race_data.get('Snelste Ronde')) and race_data['Snelste Ronde'] in punten_telling:
+        punten_telling[race_data['Snelste Ronde']] += 1
+
+    df_race_stand = pd.DataFrame(list(punten_telling.items()), columns=["Speler", "Punten"])
+    df_race_stand["Positie"] = range(1, len(df_race_stand) + 1)
+    df_race_stand = df_race_stand[["Positie", "Speler", "Punten"]].sort_values(by="Positie").reset_index(drop=True)
+
+    return df_race_stand
+
+# ✅ Laad de opgeslagen data
+df_races = load_data()
+
+# ✅ Streamlit UI
+st.set_page_config(page_title="F1 Kampioenschap 2025", layout="wide")
+st.title("🏎️ F1 Online Kampioenschap 2025")
+
+# ✅ Dropdown voor race selectie in de sidebar
+selected_race = st.sidebar.selectbox("📅 Selecteer een Grand Prix", ["Huidig Klassement"] + RACES)
+
+# 🎖️ Podium weergave
 def toon_podium(df_podium):
     if len(df_podium) >= 3:
         podium = df_podium.iloc[:3]
@@ -78,17 +106,17 @@ def toon_podium(df_podium):
             .podium-item {{
                 border-radius: 10px;
                 font-weight: bold;
-                width: 180px;
-                margin: 10px;
+                width: 220px;
+                margin: 15px;
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
                 align-items: center;
-                padding: 15px;
+                padding: 20px;
             }}
-            .gold {{ background-color: gold; font-size: 30px; height: 160px; }}
-            .silver {{ background-color: silver; font-size: 26px; height: 120px; }}
-            .bronze {{ background-color: #cd7f32; font-size: 24px; height: 100px; }}
+            .gold {{ background-color: gold; font-size: 30px; height: 180px; }}
+            .silver {{ background-color: silver; font-size: 26px; height: 140px; }}
+            .bronze {{ background-color: #cd7f32; font-size: 24px; height: 120px; }}
         </style>
 
         <div class="podium-container">
@@ -97,16 +125,6 @@ def toon_podium(df_podium):
             <div class="podium-item bronze">🥉 {podium.iloc[2]['Speler']}</div>
         </div>
         """, unsafe_allow_html=True)
-
-# ✅ Laad de opgeslagen data
-df_races = load_data()
-
-# ✅ Streamlit UI
-st.set_page_config(page_title="F1 Kampioenschap 2025", layout="wide")
-st.title("🏎️ F1 Online Kampioenschap 2025")
-
-# ✅ Dropdown voor race selectie in de sidebar
-selected_race = st.sidebar.selectbox("📅 Selecteer een Grand Prix", ["Huidig Klassement"] + RACES)
 
 # 🔄 Algemene klassement
 if selected_race == "Huidig Klassement":
@@ -117,6 +135,12 @@ if selected_race == "Huidig Klassement":
 else:
     st.subheader(f"🏁 {selected_race} Resultaten")
     race_data = df_races[df_races["Race"] == selected_race].iloc[0]
-    df_race_stand = bereken_punten(df_race_stand)
+    df_race_stand = bereken_punten_race(race_data)
     toon_podium(df_race_stand)
-    st.dataframe(df_race_stand, hide_index=True, height=400, width=600)
+    st.dataframe(df_race_stand.style.set_table_styles([{
+        'selector': 'th',
+        'props': [('text-align', 'center')]
+    }, {
+        'selector': 'td',
+        'props': [('text-align', 'center')]
+    }]), hide_index=True, height=400, width=600)
