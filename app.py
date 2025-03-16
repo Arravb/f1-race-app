@@ -25,21 +25,17 @@ DATA_FILE = "races_data.csv"
 # ✅ Kolomnamen
 COLUMNS = ["P" + str(i) for i in range(1, 21)] + ["Snelste Ronde"]
 
+# ✅ Functie om races_data.csv opnieuw te maken en correct te vullen
+def reset_race_data():
+    df = pd.DataFrame(columns=["Race"] + COLUMNS)
+    df["Race"] = RACES
+    save_data(df)
+
 # ✅ Functie om opgeslagen data te laden en race reset correct te herstellen
 def load_data():
-    if not os.path.exists(DATA_FILE) or os.stat(DATA_FILE).st_size == 0:  # ✅ Controle op leeg bestand
-        df = pd.DataFrame(columns=["Race"] + COLUMNS)
-        df["Race"] = RACES
-        save_data(df)  # ✅ Sla direct op om een lege lijst te voorkomen
-    else:
-        df = pd.read_csv(DATA_FILE)
-    
-    # Zorg dat alle kolommen correct zijn
-    for col in COLUMNS:
-        if col not in df.columns:
-            df[col] = pd.NA
-
-    return df
+    if not os.path.exists(DATA_FILE) or os.stat(DATA_FILE).st_size == 0:
+        reset_race_data()
+    return pd.read_csv(DATA_FILE)
 
 # ✅ Functie om data op te slaan
 def save_data(df):
@@ -48,21 +44,17 @@ def save_data(df):
 # ✅ Functie om punten te berekenen
 def bereken_punten(df):
     punten_telling = {speler: 0 for speler in SPELERS}
-    race_telling = {speler: 0 for speler in SPELERS}
 
     for _, row in df.iterrows():
         for pos in range(1, 21):
             speler = row.get(f'P{pos}')
             if pd.notna(speler) and speler in punten_telling:
                 punten_telling[speler] += PUNTEN_SYSTEEM[pos]
-                race_telling[speler] += 1
 
         if pd.notna(row.get('Snelste Ronde')) and row['Snelste Ronde'] in punten_telling:
             punten_telling[row['Snelste Ronde']] += 1
 
     df_stand = pd.DataFrame(list(punten_telling.items()), columns=["Speler", "Totaal Punten"]).sort_values(by="Totaal Punten", ascending=False)
-    df_stand["Aantal Races"] = df_stand["Speler"].map(race_telling)
-
     return df_stand
 
 # ✅ Laad de opgeslagen data
@@ -105,7 +97,7 @@ if selected_race != "Huidig Klassement":
             save_data(df_races)
 
         # 🔄 Live update direct na opslaan
-        st.rerun()
+        st.experimental_rerun()
 
 # 🎖️ Podium weergave
 def toon_podium(df_podium):
@@ -144,16 +136,8 @@ def toon_podium(df_podium):
         """, unsafe_allow_html=True)
 
 # 🔄 Live updates bij invoer en opslag
-if selected_race == "Huidig Klassement":
-    st.subheader("🏆 Algemeen Klassement")
-    df_stand = bereken_punten(df_races)
-    toon_podium(df_stand)
-    st.subheader("📊 Huidige Stand")
-    st.dataframe(df_stand.set_index("Speler"), height=400, width=600)
-
-else:
-    st.subheader(f"🏁 {selected_race} Resultaten")
-    df_race_stand = bereken_punten(df_races[df_races["Race"] == selected_race])
-    toon_podium(df_race_stand)
-    st.subheader(f"📊 Stand {selected_race}")
-    st.dataframe(df_race_stand.set_index("Speler"), height=400, width=600)
+st.subheader("🏆 Algemeen Klassement")
+df_stand = bereken_punten(df_races)
+toon_podium(df_stand)
+st.subheader("📊 Huidige Stand")
+st.dataframe(df_stand.set_index("Speler"), height=400, width=600)
