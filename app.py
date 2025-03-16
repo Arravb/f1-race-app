@@ -94,11 +94,11 @@ if selected_race != "Huidig Klassement":
                     existing_position = pos
                     break
 
-        # Dropdown voor positie-invoer
+        # ✅ Fix: Correcte dropdown zonder extra haakjes
         pos = st.sidebar.selectbox(
             f"{speler}",
             ["Geen"] + list(range(1, 21)),
-            index=["Geen"] + list(range(1, 21)).index(existing_position) if existing_position else 0,
+            index=(["Geen"] + list(range(1, 21))).index(str(existing_position)) if existing_position else 0
         )
         race_results[speler] = pos
 
@@ -165,6 +165,3 @@ else:
     toon_podium(df_race_stand)
     st.subheader(f"📊 Stand {selected_race}")
     st.dataframe(df_race_stand.set_index("Speler"), height=400, width=600)
-
-
-)
