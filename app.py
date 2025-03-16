@@ -5,7 +5,8 @@ import time
 import matplotlib.pyplot as plt
 
 # F1 puntensysteem
-PUNTEN_SYSTEEM = {1: 25, 2: 18, 3: 15, 4: 12, 5: 10, 6: 8, 7: 6, 8: 4, 9: 2, 10: 1, 11: 0, 12: 0, 13: 0, 14: 0, 15: 0, 16: 0, 17: 0, 18: 0, 19: 0, 20: 0}
+PUNTEN_SYSTEEM = {1: 25, 2: 18, 3: 15, 4: 12, 5: 10, 6: 8, 7: 6, 8: 4, 9: 2, 10: 1, 
+                  11: 0, 12: 0, 13: 0, 14: 0, 15: 0, 16: 0, 17: 0, 18: 0, 19: 0, 20: 0}
 
 # Spelerslijst
 SPELERS = ["Arvin", "Roland", "Frank van Ofwegen", "Mahir", "Mario-VDH", "Nicky"]
@@ -56,8 +57,21 @@ selected_race = st.sidebar.selectbox("📅 Selecteer een Grand Prix", RACES)
 if selected_race:
     st.subheader(selected_race)
     race_index = RACES.index(selected_race)
+    
     for col in COLUMNS:
-        df_races.at[race_index, col] = st.sidebar.selectbox(f"{col} ({selected_race})", ["Geen"] + SPELERS, key=f"{selected_race}_{col}", index=(["Geen"] + SPELERS).index(df_races.at[race_index, col] if pd.notna(df_races.at[race_index, col]) else "Geen"))
+        # Controleer of de kolom bestaat in df_races en voeg toe als nodig
+        if col not in df_races.columns:
+            df_races[col] = pd.NA  
+        
+        # Waarde ophalen zonder KeyError
+        huidige_waarde = df_races.at[race_index, col] if pd.notna(df_races.at[race_index, col]) else "Geen"
+
+        df_races.at[race_index, col] = st.sidebar.selectbox(
+            f"{col} ({selected_race})",
+            ["Geen"] + SPELERS,
+            key=f"{selected_race}_{col}",
+            index=(["Geen"] + SPELERS).index(huidige_waarde)
+        )
 
 # Opslaan en berekenen
 if st.sidebar.button("📥 Opslaan & Stand Berekenen"):
@@ -90,3 +104,4 @@ if len(df_stand) >= 3:
     st.pyplot(fig)
 else:
     st.write("Nog niet genoeg data om een podium te tonen.")
+
