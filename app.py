@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import os
@@ -26,14 +25,13 @@ DATA_FILE = "races_data.csv"
 # ✅ Kolomnamen
 COLUMNS = ["P" + str(i) for i in range(1, 21)] + ["Snelste Ronde"]
 
-# ✅ Functie om races_data.csv opnieuw te maken
-
+# ✅ Functie om races_data.csv opnieuw te maken en correct te vullen
 def reset_race_data():
     df = pd.DataFrame(columns=["Race"] + COLUMNS)
     df["Race"] = RACES
     save_data(df)
 
-# ✅ Functie om opgeslagen data te laden
+# ✅ Functie om opgeslagen data te laden en race reset correct te herstellen
 def load_data():
     if not os.path.exists(DATA_FILE) or os.stat(DATA_FILE).st_size == 0:
         reset_race_data()
@@ -43,10 +41,10 @@ def load_data():
 def save_data(df):
     df.to_csv(DATA_FILE, index=False)
 
-# ✅ Functie om punten te berekenen
+# ✅ Functie om punten te berekenen (Algemeen Klassement)
 def bereken_punten(df):
     punten_telling = {speler: 0 for speler in SPELERS}
-    race_telling = {speler: 0 for speler in SPELERS}  
+    race_telling = {speler: 0 for speler in SPELERS}  # Aantal races per speler
 
     for _, row in df.iterrows():
         for pos in range(1, 21):
@@ -64,22 +62,87 @@ def bereken_punten(df):
 
     return df_stand
 
-# ✅ Functie om punten per race te berekenen
+# ✅ Functie om punten en posities te berekenen voor een specifieke race
 def bereken_punten_race(race_data):
     punten_telling = {}
+
     for pos in range(1, 21):
         speler = race_data.get(f'P{pos}')
         if pd.notna(speler):
             punten_telling[speler] = PUNTEN_SYSTEEM[pos]
-    
+
     if pd.notna(race_data.get('Snelste Ronde')) and race_data['Snelste Ronde'] in punten_telling:
         punten_telling[race_data['Snelste Ronde']] += 1
 
     df_race_stand = pd.DataFrame(list(punten_telling.items()), columns=["Speler", "Punten"])
-    df_race_stand["Positie"] = range(1, len(df_race_stand) + 1)
-    return df_race_stand.sort_values(by="Positie").reset_index(drop=True)
+    df_race_stand["Positie"] = range(1, len(df_race_stand) + 1)  # ✅ Positie toevoegen
+    df_race_stand = df_race_stand[["Positie", "Speler", "Punten"]].sort_values(by="Positie").reset_index(drop=True)
 
-# ✅ Podium weergave
+    return df_race_stand
+
+# ✅ Laad de opgeslagen data
+df_races = load_data()
+
+# ✅ Streamlit UI
+st.set_page_config(page_title="F1 Kampioenschap 2025", layout="wide")
+st.title("🏎️ F1 Online Kampioenschap 2025")
+
+# ✅ Dropdown voor race selectie in de sidebar
+selected_race = st.sidebar.selectbox("📅 Selecteer een Grand Prix", ["Huidig Klassement"] + RACES)
+
+# 🏁 Sidebar: Posities én Snelste Ronde invoeren per GP
+if selected_race != "Huidig Klassement":
+    st.sidebar.subheader(f"🏁 Posities {selected_race}")
+
+    race_index = df_races[df_races["Race"] == selected_race].index[0] if selected_race in df_races["Race"].values else None
+    race_results = {}
+
+    # Huidige posities
+    for speler in SPELERS:
+        existing_position = "Geen"
+        if race_index is not None:
+            for pos in range(1, 21):
+                if df_races.at[race_index, f"P{pos}"] == speler:
+                    existing_position = str(pos)
+                    break
+
+        race_results[speler] = st.sidebar.selectbox(
+            f"{speler}",
+            ["Geen"] + [str(i) for i in range(1, 21)],
+            index=(["Geen"] + [str(i) for i in range(1, 21)]).index(existing_position) if existing_position != "Geen" else 0
+        )
+
+    # Huidige snelste ronde
+    existing_fastest_lap = "Geen"
+    if race_index is not None:
+        current_fastest = df_races.at[race_index, "Snelste Ronde"]
+        if pd.notna(current_fastest) and current_fastest in SPELERS:
+            existing_fastest_lap = current_fastest
+
+    fastest_lap_selected = st.sidebar.selectbox(
+        "Snelste Ronde",
+        ["Geen"] + SPELERS,
+        index=(["Geen"] + SPELERS).index(existing_fastest_lap) if existing_fastest_lap != "Geen" else 0
+    )
+
+    if st.sidebar.button("📥 Opslaan"):
+        if race_index is not None:
+            # Posities opslaan
+            for speler, positie in race_results.items():
+                if positie != "Geen":
+                    df_races.at[race_index, f"P{int(positie)}"] = speler
+
+            # Snelste Ronde opslaan
+            if fastest_lap_selected == "Geen":
+                df_races.at[race_index, "Snelste Ronde"] = None
+            else:
+                df_races.at[race_index, "Snelste Ronde"] = fastest_lap_selected
+
+            save_data(df_races)
+
+        st.rerun()
+
+# 🎖️ Podium weergave
 def toon_podium(df_podium):
     if len(df_podium) >= 3:
         podium = df_podium.iloc[:3]
@@ -115,15 +178,7 @@ def toon_podium(df_podium):
         </div>
         """, unsafe_allow_html=True)
 
-# ✅ Laad de opgeslagen data
-df_races = load_data()
-
-# ✅ Streamlit UI
-st.set_page_config(page_title="F1 Kampioenschap 2025", layout="wide")
-st.title("🏎️ F1 Online Kampioenschap 2025")
-
-selected_race = st.sidebar.selectbox("📅 Selecteer een Grand Prix", ["Huidig Klassement"] + RACES)
-
+# 🔄 Algemene klassement
 if selected_race == "Huidig Klassement":
     st.subheader("🏆 Algemeen Klassement")
     df_stand = bereken_punten(df_races)
@@ -135,3 +190,4 @@ else:
     df_race_stand = bereken_punten_race(race_data)
     toon_podium(df_race_stand)
     st.dataframe(df_race_stand, hide_index=True, height=400, width=600)
+
