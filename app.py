@@ -22,7 +22,7 @@ SPELERS = sorted(["Arvin", "Frank van Ofwegen", "Mahir", "Mario-VDH", "Nicky", "
 # ✅ Bestandsnaam voor opslag
 DATA_FILE = "races_data.csv"
 
-# ✅ Kolomnamen
+# ✅ Kolomnamen (Inclusief Snelste Ronde)
 COLUMNS = ["P" + str(i) for i in range(1, 21)] + ["Snelste Ronde"]
 
 # ✅ Functie om races_data.csv opnieuw te maken en correct te vullen
@@ -53,6 +53,7 @@ def bereken_punten(df):
                 punten_telling[speler] += PUNTEN_SYSTEEM[pos]
                 race_telling[speler] += 1
 
+        # ✅ Extra punt voor snelste ronde
         if pd.notna(row.get('Snelste Ronde')) and row['Snelste Ronde'] in punten_telling:
             punten_telling[row['Snelste Ronde']] += 1
 
@@ -71,11 +72,12 @@ def bereken_punten_race(race_data):
         if pd.notna(speler):
             punten_telling[speler] = PUNTEN_SYSTEEM[pos]
 
+    # ✅ Extra punt voor snelste ronde in de race
     if pd.notna(race_data.get('Snelste Ronde')) and race_data['Snelste Ronde'] in punten_telling:
         punten_telling[race_data['Snelste Ronde']] += 1
 
     df_race_stand = pd.DataFrame(list(punten_telling.items()), columns=["Speler", "Punten"])
-    df_race_stand["Positie"] = range(1, len(df_race_stand) + 1)  # ✅ Positie toevoegen
+    df_race_stand["Positie"] = range(1, len(df_race_stand) + 1)
     df_race_stand = df_race_stand[["Positie", "Speler", "Punten"]].sort_values(by="Positie").reset_index(drop=True)
 
     return df_race_stand
@@ -90,7 +92,7 @@ st.title("🏎️ F1 Online Kampioenschap 2025")
 # ✅ Dropdown voor race selectie in de sidebar
 selected_race = st.sidebar.selectbox("📅 Selecteer een Grand Prix", ["Huidig Klassement"] + RACES)
 
-# 🏁 Sidebar: Posities invoeren per GP
+# 🏁 Sidebar: Posities en snelste raceronde invoeren per GP
 if selected_race != "Huidig Klassement":
     st.sidebar.subheader(f"🏁 Posities {selected_race}")
 
@@ -111,61 +113,33 @@ if selected_race != "Huidig Klassement":
             index=(["Geen"] + [str(i) for i in range(1, 21)]).index(existing_position) if existing_position != "Geen" else 0
         )
 
+    # ✅ Snelste Ronde invoer
+    snelste_ronde = st.sidebar.selectbox("🏁 Snelste Raceronde", ["Geen"] + SPELERS)
+
     if st.sidebar.button("📥 Opslaan"):
         if race_index is not None:
             for speler, positie in race_results.items():
                 if positie != "Geen":
                     df_races.at[race_index, f"P{int(positie)}"] = speler
+            
+            # ✅ Snelste raceronde opslaan
+            df_races.at[race_index, "Snelste Ronde"] = snelste_ronde if snelste_ronde != "Geen" else None
             save_data(df_races)
 
         st.rerun()
-
-# 🎖️ Podium weergave
-def toon_podium(df_podium):
-    if len(df_podium) >= 3:
-        podium = df_podium.iloc[:3]
-        st.markdown(f"""
-        <style>
-            .podium-container {{
-                display: flex;
-                justify-content: center;
-                align-items: flex-end;
-                text-align: center;
-                margin-bottom: 40px;
-            }}
-            .podium-item {{
-                border-radius: 10px;
-                font-weight: bold;
-                width: 180px;
-                margin: 10px;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                padding: 15px;
-            }}
-            .gold {{ background-color: gold; font-size: 30px; height: 160px; }}
-            .silver {{ background-color: silver; font-size: 26px; height: 120px; }}
-            .bronze {{ background-color: #cd7f32; font-size: 24px; height: 100px; }}
-        </style>
-
-        <div class="podium-container">
-            <div class="podium-item silver">🥈 {podium.iloc[1]['Speler']}</div>
-            <div class="podium-item gold">🥇 {podium.iloc[0]['Speler']}</div>
-            <div class="podium-item bronze">🥉 {podium.iloc[2]['Speler']}</div>
-        </div>
-        """, unsafe_allow_html=True)
 
 # 🔄 Algemene klassement
 if selected_race == "Huidig Klassement":
     st.subheader("🏆 Algemeen Klassement")
     df_stand = bereken_punten(df_races)
-    toon_podium(df_stand)
     st.dataframe(df_stand, hide_index=True, height=400, width=600)
 else:
     st.subheader(f"🏁 {selected_race} Resultaten")
     race_data = df_races[df_races["Race"] == selected_race].iloc[0]
     df_race_stand = bereken_punten_race(race_data)
-    toon_podium(df_race_stand)
-    st.dataframe(df_race_stand, hide_index=True, height=400, width=600)
+    
+    # ✅ Laat de snelste ronde zien
+    snelste_rijder = race_data["Snelste Ronde"] if pd.notna(race_data["Snelste Ronde"]) else "Geen"
+    st.markdown(f"🏁 **Snelste Ronde:** {snelste_rijder}")
 
+    st.dataframe(df_race_stand, hide_index=True, height=400, width=600)
