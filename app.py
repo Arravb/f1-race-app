@@ -41,21 +41,43 @@ def load_data():
 def save_data(df):
     df.to_csv(DATA_FILE, index=False)
 
-# ✅ Functie om punten te berekenen
+# ✅ Functie om punten te berekenen (Algemeen Klassement)
 def bereken_punten(df):
     punten_telling = {speler: 0 for speler in SPELERS}
+    race_telling = {speler: 0 for speler in SPELERS}  # Aantal races per speler
 
     for _, row in df.iterrows():
         for pos in range(1, 21):
             speler = row.get(f'P{pos}')
             if pd.notna(speler) and speler in punten_telling:
                 punten_telling[speler] += PUNTEN_SYSTEEM[pos]
+                race_telling[speler] += 1
 
         if pd.notna(row.get('Snelste Ronde')) and row['Snelste Ronde'] in punten_telling:
             punten_telling[row['Snelste Ronde']] += 1
 
-    df_stand = pd.DataFrame(list(punten_telling.items()), columns=["Speler", "Totaal Punten"]).sort_values(by="Totaal Punten", ascending=False)
+    df_stand = pd.DataFrame(list(punten_telling.items()), columns=["Speler", "Totaal Punten"])
+    df_stand["Aantal Races"] = df_stand["Speler"].map(race_telling)
+    df_stand = df_stand.sort_values(by="Totaal Punten", ascending=False)
+
     return df_stand
+
+# ✅ Functie om punten te berekenen voor een specifieke race
+def bereken_punten_race(race_data):
+    punten_telling = {speler: 0 for speler in SPELERS}
+
+    for pos in range(1, 21):
+        speler = race_data.get(f'P{pos}')
+        if pd.notna(speler) and speler in punten_telling:
+            punten_telling[speler] += PUNTEN_SYSTEEM[pos]
+
+    if pd.notna(race_data.get('Snelste Ronde')) and race_data['Snelste Ronde'] in punten_telling:
+        punten_telling[race_data['Snelste Ronde']] += 1
+
+    df_race_stand = pd.DataFrame(list(punten_telling.items()), columns=["Speler", "Punten"])
+    df_race_stand = df_race_stand.sort_values(by="Punten", ascending=False)
+
+    return df_race_stand
 
 # ✅ Laad de opgeslagen data
 df_races = load_data()
@@ -84,19 +106,17 @@ if selected_race != "Huidig Klassement":
 
         race_results[speler] = st.sidebar.selectbox(
             f"{speler}",
-            ["Geen"] + [str(i) for i in range(1, 21)],  # ✅ Alle waarden omgezet naar str
+            ["Geen"] + [str(i) for i in range(1, 21)],
             index=(["Geen"] + [str(i) for i in range(1, 21)]).index(existing_position) if existing_position != "Geen" else 0
         )
 
-    # ✅ Direct opslaan & updaten bij klik op "Opslaan"
     if st.sidebar.button("📥 Opslaan"):
         if race_index is not None:
             for speler, positie in race_results.items():
                 if positie != "Geen":
-                    df_races.at[race_index, f"P{int(positie)}"] = speler  # ✅ Positie correct als int opslaan
+                    df_races.at[race_index, f"P{int(positie)}"] = speler
             save_data(df_races)
 
-        # 🔄 **Fix: `st.rerun()` in plaats van `st.experimental_rerun()`**
         st.rerun()
 
 # 🎖️ Podium weergave
@@ -135,9 +155,16 @@ def toon_podium(df_podium):
         </div>
         """, unsafe_allow_html=True)
 
-# 🔄 Live updates bij invoer en opslag
-st.subheader("🏆 Algemeen Klassement")
-df_stand = bereken_punten(df_races)
-toon_podium(df_stand)
-st.subheader("📊 Huidige Stand")
-st.dataframe(df_stand.set_index("Speler"), height=400, width=600)
+# 🔄 Algemene klassement
+if selected_race == "Huidig Klassement":
+    st.subheader("🏆 Algemeen Klassement")
+    df_stand = bereken_punten(df_races)
+    toon_podium(df_stand)
+    st.dataframe(df_stand, height=400, width=600)
+else:
+    st.subheader(f"🏁 {selected_race} Resultaten")
+    race_data = df_races[df_races["Race"] == selected_race].iloc[0]
+    df_race_stand = bereken_punten_race(race_data)
+    toon_podium(df_race_stand)
+    st.dataframe(df_race_stand, height=400, width=600)
+
