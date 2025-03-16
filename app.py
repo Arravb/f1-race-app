@@ -2,45 +2,43 @@ import streamlit as st
 import pandas as pd
 import os
 
-# F1 puntensysteem
-PUNTEN_SYSTEEM = {1: 25, 2: 18, 3: 15, 4: 12, 5: 10, 6: 8, 7: 6, 8: 4, 9: 2, 10: 1, 
-                  11: 0, 12: 0, 13: 0, 14: 0, 15: 0, 16: 0, 17: 0, 18: 0, 19: 0, 20: 0}
-
-# Spelerslijst (alfabetisch gesorteerd)
-SPELERS = sorted(["Arvin", "Frank van Ofwegen", "Mahir", "Mario-VDH", "Nicky", "Roland"])
-
-# Bestandsnaam voor opslag
-DATA_FILE = "races_data.csv"
-
-# Alle races van het seizoen
+# ✅ Correcte F1 2025 racevolgorde
 RACES = [
-    "Bahrein GP", "Saoedi-Arabië GP", "Australië GP", "Japan GP", "China GP", "Miami GP", 
-    "Emilia-Romagna GP", "Monaco GP", "Canada GP", "Spanje GP", "Oostenrijk GP", 
-    "Groot-Brittannië GP", "Hongarije GP", "België GP", "Nederland GP", "Italië GP", 
-    "Azerbeidzjan GP", "Singapore GP", "Verenigde Staten GP", "Mexico GP", 
+    "Bahrein GP", "Saoedi-Arabië GP", "Australië GP", "Japan GP", "China GP", "Miami GP",
+    "Emilia-Romagna GP", "Monaco GP", "Canada GP", "Spanje GP", "Oostenrijk GP",
+    "Groot-Brittannië GP", "Hongarije GP", "België GP", "Nederland GP", "Italië GP",
+    "Azerbeidzjan GP", "Singapore GP", "Verenigde Staten GP", "Mexico GP",
     "Brazilië GP", "Las Vegas GP", "Qatar GP", "Abu Dhabi GP"
 ]
 
-# Kolomnamen
+# ✅ Puntensysteem
+PUNTEN_SYSTEEM = {1: 25, 2: 18, 3: 15, 4: 12, 5: 10, 6: 8, 7: 6, 8: 4, 9: 2, 10: 1}
+for i in range(11, 21):
+    PUNTEN_SYSTEEM[i] = 0  # P11-P20 krijgen 0 punten
+
+# ✅ Spelerslijst (alfabetisch gesorteerd)
+SPELERS = sorted(["Arvin", "Frank van Ofwegen", "Mahir", "Mario-VDH", "Nicky", "Roland"])
+
+# ✅ Bestandsnaam voor opslag
+DATA_FILE = "races_data.csv"
+
+# ✅ Kolomnamen
 COLUMNS = ["P" + str(i) for i in range(1, 21)] + ["Snelste Ronde"]
 
-# Functie om opgeslagen data te laden
+# ✅ Functie om opgeslagen data te laden
 def load_data():
     if os.path.exists(DATA_FILE):
         df = pd.read_csv(DATA_FILE)
     else:
         df = pd.DataFrame(columns=["Race"] + COLUMNS)
         df["Race"] = RACES
-    for col in COLUMNS:
-        if col not in df.columns:
-            df[col] = pd.NA
     return df
 
-# Functie om data op te slaan
+# ✅ Functie om data op te slaan
 def save_data(df):
     df.to_csv(DATA_FILE, index=False)
 
-# Functie om punten te berekenen
+# ✅ Functie om punten te berekenen
 def bereken_punten(df):
     punten_telling = {speler: 0 for speler in SPELERS}
     race_telling = {speler: 0 for speler in SPELERS}
@@ -60,14 +58,14 @@ def bereken_punten(df):
 
     return df_stand
 
-# Laad de opgeslagen data
+# ✅ Laad de opgeslagen data
 df_races = load_data()
 
-# Streamlit UI
+# ✅ Streamlit UI
 st.set_page_config(page_title="F1 Kampioenschap 2025", layout="wide")
 st.title("🏎️ F1 Online Kampioenschap 2025")
 
-# Dropdown voor race selectie in de sidebar
+# ✅ Dropdown voor race selectie in de sidebar
 selected_race = st.sidebar.selectbox("📅 Selecteer een Grand Prix", ["Huidig Klassement"] + RACES)
 
 # 🏁 Sidebar: Posities invoeren per GP
@@ -81,7 +79,7 @@ if selected_race != "Huidig Klassement":
 
     race_results = {}
 
-    for i, speler in enumerate(SPELERS, start=1):
+    for speler in SPELERS:
         # Haal bestaande positie op, anders "Geen"
         existing_position = None
         for pos in range(1, 21):
@@ -106,9 +104,9 @@ if selected_race != "Huidig Klassement":
                     df_races.at[race_index, f"P{positie}"] = speler
         save_data(df_races)
         
-        # 🔄 Gebruik `st.rerun()` in plaats van `st.experimental_rerun()`
+        # 🔄 Live update NA opslaan
         st.session_state["update"] = True
-        st.rerun()  # Herstart correct
+        st.rerun()  # Herstart de app voor directe weergave
 
 # 🎖️ Podium weergave
 def toon_podium(df_podium):
@@ -160,5 +158,3 @@ else:
     toon_podium(df_race_stand)
     st.subheader(f"📊 Stand {selected_race}")
     st.dataframe(df_race_stand.set_index("Speler"), height=400, width=600)
-
-
