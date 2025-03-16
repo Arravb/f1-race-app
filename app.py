@@ -40,7 +40,7 @@ def bereken_punten(df):
                 punten_telling[speler] += PUNTEN_SYSTEEM[pos]
         if pd.notna(row.get('Snelste Ronde')) and row['Snelste Ronde'] in punten_telling:
             punten_telling[row['Snelste Ronde']] += 1
-    df_stand = pd.DataFrame(list(punten_telling.items()), columns=["Speler", "Totaal Punten"]).sort_values(by="Totaal Punten", ascending=False)
+    df_stand = pd.DataFrame(list(punten_telling.items()), columns=["Naam", "Punten"]).sort_values(by="Punten", ascending=False)
     return df_stand
 
 # Laad de opgeslagen data
@@ -68,18 +68,26 @@ if st.sidebar.button("📥 Opslaan & Stand Berekenen"):
 # Toon de huidige ranglijst
 df_stand = bereken_punten(df_races)
 st.header("Huidige Stand")
-st.dataframe(df_stand.iloc[:, 1:], height=400, width=600)  # Eerste kolom verwijderen
+st.dataframe(df_stand, height=400, width=600)  # Enkel Naam en Punten
 
 # Podium visualisatie
 st.subheader("🏆 Podium")
 if len(df_stand) >= 3:
-    podium_names = [df_stand.iloc[1]['Speler'], df_stand.iloc[0]['Speler'], df_stand.iloc[2]['Speler']]
+    podium_names = [df_stand.iloc[1]['Naam'], df_stand.iloc[0]['Naam'], df_stand.iloc[2]['Naam']]
     colors = ["silver", "gold", "#cd7f32"]  # Zilver, Goud, Brons
+    heights = [2, 3, 1.5]  # Hoogte van de podiumblokken
     medals = ["🥈", "🥇", "🥉"]
-
-    for i in range(3):
-        st.write(f"{medals[i]} {podium_names[i]}")
+    fig, ax = plt.subplots(figsize=(5, 4))
+    ax.bar(podium_names, heights, color=colors, width=0.5)
+    ax.set_xticks(range(len(podium_names)))
+    ax.set_xticklabels(podium_names, fontsize=14, fontweight='bold')
+    ax.set_yticks([])
+    ax.set_title("Podium Stand", fontsize=16)
+    for i, txt in enumerate(medals):
+        ax.text(i, heights[i] + 0.1, txt, ha='center', fontsize=18, fontweight='bold')
+    st.pyplot(fig)
 else:
     st.write("Nog niet genoeg data om een podium te tonen.")
+
 
 
