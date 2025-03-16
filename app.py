@@ -58,24 +58,25 @@ def bereken_punten(df):
 
     df_stand = pd.DataFrame(list(punten_telling.items()), columns=["Speler", "Totaal Punten"])
     df_stand["Aantal Races"] = df_stand["Speler"].map(race_telling)
-    df_stand = df_stand.sort_values(by="Totaal Punten", ascending=False).reset_index(drop=True)  # ✅ Index verbergen
+    df_stand = df_stand.sort_values(by="Totaal Punten", ascending=False).reset_index(drop=True)
 
     return df_stand
 
-# ✅ Functie om punten te berekenen voor een specifieke race
+# ✅ Functie om punten en posities te berekenen voor een specifieke race
 def bereken_punten_race(race_data):
-    punten_telling = {speler: 0 for speler in SPELERS}
+    punten_telling = {}
 
     for pos in range(1, 21):
         speler = race_data.get(f'P{pos}')
-        if pd.notna(speler) and speler in punten_telling:
-            punten_telling[speler] += PUNTEN_SYSTEEM[pos]
+        if pd.notna(speler):
+            punten_telling[speler] = PUNTEN_SYSTEEM[pos]
 
     if pd.notna(race_data.get('Snelste Ronde')) and race_data['Snelste Ronde'] in punten_telling:
         punten_telling[race_data['Snelste Ronde']] += 1
 
     df_race_stand = pd.DataFrame(list(punten_telling.items()), columns=["Speler", "Punten"])
-    df_race_stand = df_race_stand.sort_values(by="Punten", ascending=False).reset_index(drop=True)  # ✅ Index verbergen
+    df_race_stand["Positie"] = range(1, len(df_race_stand) + 1)  # ✅ Positie toevoegen
+    df_race_stand = df_race_stand[["Positie", "Speler", "Punten"]].sort_values(by="Positie").reset_index(drop=True)
 
     return df_race_stand
 
