@@ -82,10 +82,11 @@ if selected_race != "Huidig Klassement":
     for speler in SPELERS:
         # Haal bestaande positie op, anders "Geen"
         existing_position = None
-        for pos in range(1, 21):
-            if race_index is not None and df_races.at[race_index, f"P{pos}"] == speler:
-                existing_position = pos
-                break
+        if race_index is not None:
+            for pos in range(1, 21):
+                if df_races.at[race_index, f"P{pos}"] == speler:
+                    existing_position = pos
+                    break
 
         # Dropdown voor positie-invoer
         pos = st.sidebar.selectbox(
@@ -98,11 +99,11 @@ if selected_race != "Huidig Klassement":
     # ✅ Direct opslaan & updaten bij klik op "Opslaan"
     if st.sidebar.button("📥 Opslaan"):
         if race_index is not None:
-            df_races.loc[race_index, COLUMNS] = pd.NA  # Leegmaken voordat nieuwe data wordt ingevoerd
+            # ✅ Opslaan van nieuwe resultaten
             for speler, positie in race_results.items():
                 if positie != "Geen":
                     df_races.at[race_index, f"P{positie}"] = speler
-        save_data(df_races)
+            save_data(df_races)
         
         # 🔄 Live update NA opslaan
         st.session_state["update"] = True
